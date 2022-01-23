@@ -8,6 +8,7 @@ from pca import PCA
 
 # import tqdm
 epsilon = 1e-5
+fold_count = 10
 """
 NOTE
 ----
@@ -50,7 +51,7 @@ def softmax(a):
        Value after applying softmax (z from the slides).
     """
     exp_array = np.exp(a - np.max(a))
-    return exp_array / exp_array.sum()
+    return exp_array / exp_array.sum(axis=1)[:,np.newaxis]
 
 
 def binary_cross_entropy(y, t):
@@ -70,8 +71,7 @@ def binary_cross_entropy(y, t):
     float 
         binary cross entropy loss value according to above definition
     """
-    t = (t[:, None])
-    loss = np.mean(np.multiply(t, np.log10(y + epsilon)) + np.multiply((1 - t), np.log10(1 - y + epsilon)))
+    loss = -np.mean(np.multiply(t, np.log10(y + epsilon)) + np.multiply((1 - t), np.log10(1 - y + epsilon)))
     return loss
 
 
@@ -92,8 +92,9 @@ def multiclass_cross_entropy(y, t):
     float 
         multiclass cross entropy loss value according to above definition
     """
-    loss = -np.multiply(t, np.log(y + epsilon)).sum()
+    loss = -np.mean(np.multiply(t, np.log(y + epsilon)))
     return loss
+
 
 
 class Network:
@@ -166,7 +167,6 @@ class Network:
             average loss over the minibatch
             accuracy over the minibatch
         """
-        print("Started Training")
         X, y = feature, label
         k = self.hyperparameters.k_folds
 
@@ -178,12 +178,12 @@ class Network:
         best_test_loss = []
         best_test_accuracy = []
 
-        training_loss = np.zeros((k, self.hyperparameters.epochs))
-        validation_loss = np.zeros((k, self.hyperparameters.epochs))
-        training_perf = np.zeros((k, self.hyperparameters.epochs))
-        validation_perf = np.zeros((k, self.hyperparameters.epochs))
+        training_loss = np.zeros((fold_count, self.hyperparameters.epochs))
+        validation_loss = np.zeros((fold_count, self.hyperparameters.epochs))
+        training_perf = np.zeros((fold_count, self.hyperparameters.epochs))
+        validation_perf = np.zeros((fold_count, self.hyperparameters.epochs))
 
-        for f in range(k):
+        for f in range(fold_count):
             print("Cross Validation fold ", f)
             train = Dataset(np.concatenate([X[order[:l_idx]], X[order[r_idx:]]]),
                             np.concatenate([y[order[:l_idx]], y[order[r_idx:]]]))
@@ -207,57 +207,28 @@ class Network:
             validation.append_bias()
             test.append_bias()
 
-            min_loss = math.inf
+            max_loss = -math.inf
             # self.weights = np.ones((self.hyperparameters.in_dim + 1, self.hyperparameters.out_dim))
             best_weights = self.weights
 
-            validation_accuracy = []
-
-            test_losses = []
-            test_accuracy = []
             for e in range(self.hyperparameters.epochs):
-                train_pred = self.forward(train.features)
-                training_loss[f, e] = self.getLoss(train_pred, train.labels)
-
-                training_perf[f, e] = self.getAccuracy(train_pred, train.labels)
-
-                ## For plotting
-                val_pred = self.forward(validation.features)
-                validation_loss[f, e] = self.getLoss(val_pred, validation.labels)
-                validation_perf[f, e] = self.getAccuracy(val_pred, validation.labels)
-                test_pred = self.forward(test.features)
-                test_losses.append(self.getLoss(test_pred, test.labels))
-                test_accuracy.append(self.getAccuracy(test_pred, test.labels))
+                training_loss[f, e], training_perf[f, e], validation_loss[f, e], validation_perf[f, e] = self.stochastic_gradient_descent(train, validation)
 
                 ## To find the best weights
-                if validation_loss[f][e] < min_loss:
+                if validation_loss[f][e] > max_loss:
                     best_weights = self.weights
-
-                ## update the weights
-                self.weights -= self.hyperparameters.learning_rate * self.getGradients(train.features, train_pred,
-                                                                                       train.labels)
+                    max_loss = validation_loss[f][e]
 
             self.weights = best_weights
             best_test_pred = self.forward(test.features)
             best_test_loss.append(self.getLoss(best_test_pred, test.labels))
             best_test_accuracy.append(self.getAccuracy(best_test_pred, test.labels))
 
+
         print("Final Accuracy is ", np.mean(best_test_accuracy))
-        plt.plot(range(self.hyperparameters.epochs), np.mean(training_loss, axis=0))
-        plt.title('Training Set Loss')
-        plt.show()
+        self.plot(training_loss, validation_loss, 'Loss')
+        self.plot(training_perf, validation_perf, 'Accuracy')
 
-        plt.plot(range(self.hyperparameters.epochs), np.mean(validation_loss, axis=0))
-        plt.title('Validation Set Loss')
-        plt.show()
-
-        plt.plot(range(self.hyperparameters.epochs), np.mean(training_perf, axis=0))
-        plt.title('Training Set Accuracy')
-        plt.show()
-
-        plt.plot(range(self.hyperparameters.epochs), np.mean(validation_perf, axis=0))
-        plt.title('Validation Set Accuracy')
-        plt.show()
 
     def test(self, minibatch):
         """
@@ -273,8 +244,12 @@ class Network:
             The minibatch to iterate over
         """
         X, y = minibatch
+        prediction = self.forward(X)
+        accuracy = self.getAccuracy(prediction, y)
 
-        pass
+        print("The accuracy of the test batch is ", accuracy)
+
+
 
     def getLoss(self, y, t):
         if self.loss == 0:
@@ -284,7 +259,6 @@ class Network:
 
     def getGradients(self, X, predictions, true):
         if self.loss == 0:
-            true = true[:, np.newaxis]
             predictions = np.array([1 if i > 0.5 else 0 for i in predictions])[:, np.newaxis]
         dw = -np.dot(np.transpose(X), (true - predictions))
         return dw
@@ -293,13 +267,12 @@ class Network:
         sample_count = predictions.shape[0]
         if self.loss == 0:
             predictions = np.array([1 if i > 0.5 else 0 for i in predictions])[:, np.newaxis]
-            true = true[:, np.newaxis]
         else:
             predictions = np.argmax(predictions, axis=1)[:, np.newaxis]
             true = np.argmax(true, axis=1)[:, np.newaxis]
         return (predictions == true).sum() / sample_count
 
-    def batch_gradient_descent(self, train, validation, test):
+    def batch_gradient_descent(self, train, validation):
 
         ## Train Set
         train_prediction = self.forward(train.features)
@@ -314,3 +287,38 @@ class Network:
         ## update the weights
         self.weights -= self.hyperparameters.learning_rate * self.getGradients(train.features, train_prediction,
                                                                                train.labels)
+        return train_loss, train_accuracy, val_loss, val_accuracy
+
+    def stochastic_gradient_descent(self, train, validation):
+        train_prediction = np.zeros_like(train.labels)
+        l_idx, r_idx = 0, self.hyperparameters.batch_size
+        while r_idx < (train.features.shape[0]):
+            train_prediction[l_idx:r_idx] = self.forward(train.features[l_idx:r_idx])
+            self.weights -= self.hyperparameters.learning_rate * self.getGradients(train.features[l_idx:r_idx], train_prediction[l_idx:r_idx],  train.labels[l_idx:r_idx])
+            l_idx, r_idx = r_idx, r_idx + self.hyperparameters.batch_size
+
+
+        train_loss = self.getLoss(train_prediction, train.labels)
+        train_accuracy = self.getAccuracy(train_prediction, train.labels)
+
+        ## Validation Set
+        val_prediction = self.forward(validation.features)
+        val_loss = self.getLoss(val_prediction, validation.labels)
+        val_accuracy = self.getAccuracy(val_prediction, validation.labels)
+
+        return train_loss, train_accuracy, val_loss, val_accuracy
+
+
+    def plot(self, train, validation, title):
+        plt.plot(range(self.hyperparameters.epochs), np.mean(train, axis=0), color='y', label='Train')
+        plt.plot(range(self.hyperparameters.epochs), np.mean(validation, axis=0), color='g', label='Validation')
+        plt.title(title+'Mean')
+        plt.legend()
+        plt.show()
+
+        plt.plot(range(self.hyperparameters.epochs), np.std(train, axis=0), color='y', label='Train')
+        plt.plot(range(self.hyperparameters.epochs), np.std(validation, axis=0), color='g', label='Validation')
+        plt.title(title+'Standard Deviation')
+        plt.legend()
+        plt.show()
+

@@ -7,19 +7,19 @@ from Dataset import Dataset
 
 
 def LogisticRegerssion(hyperparameters):
-    pca = PCA(1021)
-    hyperparameters.out_dim = 43
-    hyperparameters.in_dim = 300
-    hyperparameters.epochs = 300
-    hyperparameters.learning_rate == 0.001
+
+    hyperparameters.in_dim = 500
+    hyperparameters.epochs = 100
+    hyperparameters.learning_rate == 0.000001
     hyperparameters.k_folds = 10
     dataset = Dataset(aligned=True)
+    hyperparameters.out_dim = dataset.labels.shape[1]
     logistic = Network(hyperparameters, 1, 1)
     logistic.train(dataset.features, dataset.labels)
 
 
 def main(hyperparameters):
-        LogisticRegerssion( hyperparameters)
+        LogisticRegerssion(hyperparameters)
 
 parser = argparse.ArgumentParser(description = 'CSE251B PA1')
 parser.add_argument('--batch-size', type = int, default = 128,

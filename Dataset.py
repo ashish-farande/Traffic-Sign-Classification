@@ -52,7 +52,7 @@ class Dataset:
         -------
             2d array (shape n*k) with each row corresponding to a one-hot encoded version of the original value.
         """
-        return y - np.min(y) if self.filter else np.eye(np.max(y) + 1)[y]
+        return (y - np.min(y))[:,np.newaxis] if self.filter else np.eye(np.max(y) + 1)[y]
 
     def onehot_decode(self, y):
         """
