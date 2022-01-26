@@ -92,13 +92,24 @@ class Dataset:
                 Transformed dataset with mean 0 and stdev 1
                 Computed statistics (mean and stdev) for the dataset to undo z-scoring.
         """
+        # if u is None:
+        #     u = np.mean(self.features, axis=1)
+        #
+        # if sd is None:
+        #     sd = np.std(self.features, axis=1)
+        #
+        # self.features = (self.features - u[:, None]) / sd[:, None]
+
         if u is None:
-            u = np.mean(self.features, axis=1)
+            u = np.mean(self.features, axis=0)
 
         if sd is None:
-            sd = np.std(self.features, axis=1)
+            sd = np.std(self.features, axis=0)
 
-        self.features = (self.features - u[:, None]) / sd[:, None]
+        self.features = (self.features - u)
+
+        self.features = (self.features)/ sd
+
         return self.features
 
     def min_max_normalize(self, _min=None, _max=None):

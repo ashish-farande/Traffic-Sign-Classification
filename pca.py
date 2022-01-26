@@ -68,21 +68,18 @@ class PCA:
         new_X = np.dot(X, self.eigenVector)
         new_X = new_X/np.sqrt(self.eigenValues)
 
-        # image = np.multiply(X[0,:], self.eigenVector[:,0])
-        # plt.imshow(image.reshape((32,32)))
-        # plt.show()
-        # image = np.multiply(X[0, :], self.eigenVector[:, 1])
-        # plt.imshow(image.reshape((32, 32)))
-        # plt.show()
-        # image = np.multiply(X[0, :], self.eigenVector[:, 2])
-        # plt.imshow(image.reshape((32, 32)))
-        # plt.show()
-        # image = np.multiply(X[0, :], self.eigenVector[:, 3])
-        # plt.imshow(image.reshape((32, 32)))
-        # plt.show()
+
 
         return new_X
 
+    def plot_image(self, flat_image):
+
+        print(self.eigenVector[:, 0].shape)
+        for i in range(4):
+            # image = np.multiply(flat_image, self.eigenVector[:,i])
+            plt.title("PC "+ str(i+1))
+            plt.imshow(self.eigenVector[:,i].reshape((32,32)))
+            plt.show()
 
 
 
