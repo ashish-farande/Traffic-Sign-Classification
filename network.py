@@ -200,19 +200,23 @@ class Network:
             validation.append_bias()
             test.append_bias()
 
-            # Training
-            training_loss[f], training_perf[f], validation_loss[f], validation_perf[f] = self.train(train, validation)
+            if self.hyperparameters.gd != "both":
+                # Training
+                training_loss[f], training_perf[f], validation_loss[f], validation_perf[f] = self.train(train, validation)
+
+
+            else:
+                # Below commented code was being used when Batch vs SGD study was being done
+                self.hyperparameters.gd = 'batch'
+                self.weights = np.zeros((self.hyperparameters.in_dim + 1, self.hyperparameters.out_dim))
+                training_loss_batch[f], training_perf[f], validation_loss[f], validation_perf[f] = self.train(train, validation)
+                self.hyperparameters.gd = 'sgd'
+                self.weights = np.zeros((self.hyperparameters.in_dim + 1, self.hyperparameters.out_dim))
+                training_loss_sgd[f], training_perf[f], validation_loss[f], validation_perf[f] = self.train(train, validation)
+                self.hyperparameters.gd = "both"
 
             # Testing
             best_test_accuracy[f] = self.test(test)
-
-            # Below commented code was being used when Batch vs SGD study was being done
-            # self.hyperparameters.gd = 'batch'
-            # self.weights = np.zeros((self.hyperparameters.in_dim + 1, self.hyperparameters.out_dim))
-            # training_loss_batch[f], training_perf[f], validation_loss[f], validation_perf[f] = self.train(train, validation)
-            # self.hyperparameters.gd = 'sgd'
-            # self.weights = np.zeros((self.hyperparameters.in_dim + 1, self.hyperparameters.out_dim))
-            # training_loss_sgd[f], training_perf[f], validation_loss[f], validation_perf[f] = self.train(train, validation)
 
             l_idx, r_idx = l_idx + fold_width, r_idx + fold_width
 
@@ -220,10 +224,11 @@ class Network:
 
         print("Average Accuracy is ", np.mean(best_test_accuracy))
 
-        self.plot(training_loss, validation_loss, 'Loss')
-        self.plot(training_perf, validation_perf, 'Accuracy')
-
-        # self.plot(training_loss_batch, training_loss_sgd, 'Batch v/s SGD')
+        if self.hyperparameters.gd != "both":
+            self.plot(training_loss, validation_loss, 'Loss')
+            self.plot(training_perf, validation_perf, 'Accuracy')
+        else:
+            self.plot(training_loss_batch, training_loss_sgd, 'Batch v/s SGD')
 
         # Plotting the Heatmap for confusion Matrix
         if self.hyperparameters.out_dim>1:

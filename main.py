@@ -3,22 +3,23 @@ import argparse
 from Dataset import Dataset
 from network import Network
 
-PCA_DIM = 200
+PCA_DIM = 300
 
 
 def softmax_regression(hyperparameters, gd, is_aligned, isPCA):
     dataset = Dataset(aligned=is_aligned)
     minibatch = dataset.features, dataset.labels
 
-    hyperparameters.epochs = 300
+    hyperparameters.epochs = 50
     hyperparameters.do_PCA = isPCA
-    hyperparameters.fold_runs = 10
+    hyperparameters.fold_runs = 1
     hyperparameters.out_dim = dataset.labels.shape[1]
     hyperparameters.in_dim = PCA_DIM if isPCA else dataset.features.shape[1]
-    hyperparameters.learning_rate = 0.001
+    hyperparameters.learning_rate = 0.001 if gd != 'both' else 0.005
+    hyperparameters.gd = gd
+
     print(hyperparameters)
 
-    hyperparameters.gd = gd
     softmax_sgd= Network(hyperparameters, 1, 1)
     softmax_sgd.run_fold_set(minibatch)
 
@@ -51,13 +52,15 @@ def main(hyperparameters):
     hyperparameters.batch_size = 1
 
 
-    print("1. Q 5_b")
-    print("2. Q 5_c")
-    print("3. Q 5_d")
-    print("4. Q 6_a_i")
-    print("5. Q 6_a_ii without PCA")
-    print("6. Q 6_a_ii with Unaligned Dataset")
-    print("7. Q 6_b_SGD")
+    print("1. Q 5_b Logistic Regression Unaligned")
+    print("2. Q 5_c Logistic Regression Aligned")
+    print("3. Q 5_d Logistic Regression Dangerous Curve")
+    print("4. Q 6_a_i Softmax Regression with PCA and Aligned Dataset")
+    print("5. Q 6_a_ii Softmax Regression without PCA and Aligned Dataset")
+    print("6. Q 6_a_ii Softmax Regression with PCA and Unaligned Dataset")
+    print("7. Q 6_b_i SGD with PCA and Aligned Dataset")
+    print("8. Q 6_b_ii Batch v/s SGD")
+
 
 
     choice = int(input("Enter your choice of question:"))
@@ -77,6 +80,10 @@ def main(hyperparameters):
         softmax_regression(hyperparameters, 'batch', False, True)
     elif choice == 7:
         softmax_regression(hyperparameters, 'sgd', True, True)
+    elif choice == 8:
+        softmax_regression(hyperparameters, 'both', True, True)
+    else:
+        print("Option Not available")
 
 
 
