@@ -12,7 +12,7 @@ def softmax_regression(hyperparameters, gd, is_aligned, isPCA):
 
     hyperparameters.epochs = 50
     hyperparameters.do_PCA = isPCA
-    hyperparameters.fold_runs = 1
+    hyperparameters.fold_runs = 10
     hyperparameters.out_dim = dataset.labels.shape[1]
     hyperparameters.in_dim = PCA_DIM if isPCA else dataset.features.shape[1]
     hyperparameters.learning_rate = 0.001 if gd != 'both' else 0.005
