@@ -82,6 +82,8 @@ def main(hyperparameters):
         softmax_regression(hyperparameters, 'sgd', True, True)
     elif choice == 8:
         softmax_regression(hyperparameters, 'both', True, True)
+    elif choice == 9:
+        softmax_regression(hyperparameters, 'both', True, True)
     else:
         print("Option Not available")
 
@@ -95,11 +97,18 @@ parser.add_argument('--epochs', type=int, default=300,
 parser.add_argument('--learning-rate', type=float, default=0.001,
                     help='learning rate (default: 0.001)')
 parser.add_argument('--in-dim', type=int, default=32 * 32,
-                    help='number of principal components to use')
+                    help='number of principal components to use (default: 32 * 32)')
 parser.add_argument('--out-dim', type=int, default=43,
-                    help='number of outputs')
+                    help='number of outputs (default: 43)')
 parser.add_argument('--k-folds', type=int, default=10,
-                    help='number of folds for cross-validation')
-
+                    help='number of folds for cross-validation (default: 10)')
+parser.add_argument('--regression', type=int, default="Softmax",
+                    help='Logistic vs Softmax (default: Softmax)')
+parser.add_argument('--gradient-descent', type=int, default="SGD",
+                    help='Batch vs SGD (default: SGD)')
+parser.add_argument('--align', type=int, default=True,
+                    help='Align the images to the center (default: True)')
+parser.add_argument('--pca', type=int, default=True,
+                    help='Apply PCA to the dataset (default: True)')
 hyperparameters = parser.parse_args()
 main(hyperparameters)
