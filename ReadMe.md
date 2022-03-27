@@ -36,3 +36,20 @@ The following arguments (with the default values) can be passed with the above c
 --pca-dim: 100
 ```
 
+There are few other predefined setting which can be executed by the following command:
+```bash
+$ python main.py --parameters-mode=predefined
+```
+
+We have following predefined hyperparameter setting to choose from:
+
+```bash
+1. Logistic Regression - Unaligned
+2. Logistic Regression - Aligned
+3. Logistic Regression - Dangerous Curve signs
+4. Softmax Regression - Batch with PCA and Aligned Dataset
+5. Softmax Regression - Batch without PCA and Aligned Dataset
+6. Softmax Regression - Batch with PCA and Unaligned Dataset
+7. Softmax Regression - SGD with PCA and Aligned Dataset
+8. Softmax Regression - Batch v/s SGD
+```
