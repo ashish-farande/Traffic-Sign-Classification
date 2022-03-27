@@ -122,7 +122,7 @@ class Network:
 
         self.confusion = np.zeros((self.hyperparameters.out_dim, self.hyperparameters.out_dim))
 
-        if self.hyperparameters.do_PCA:
+        if self.hyperparameters.pca:
             self.pca = PCA(self.hyperparameters.in_dim)  ## TODO: Need to come up proper number of PCs
 
     def forward(self, X):
@@ -189,7 +189,7 @@ class Network:
             test.z_score_normalize()
 
             # Fitting PCA
-            if self.hyperparameters.do_PCA:
+            if self.hyperparameters.pca:
                 self.pca.fit(train.features)
                 train.features = self.pca.transform(train.features)
                 validation.features = self.pca.transform(validation.features)
@@ -200,20 +200,20 @@ class Network:
             validation.append_bias()
             test.append_bias()
 
-            if self.hyperparameters.gd != "both":
+            if self.hyperparameters.gradient_descent != "both":
                 # Training
                 training_loss[f], training_perf[f], validation_loss[f], validation_perf[f] = self.train(train, validation)
 
 
             else:
                 # Below commented code was being used when Batch vs SGD study was being done
-                self.hyperparameters.gd = 'batch'
+                self.hyperparameters.gradient_descent = 'batch'
                 self.weights = np.zeros((self.hyperparameters.in_dim + 1, self.hyperparameters.out_dim))
                 training_loss_batch[f], training_perf[f], validation_loss[f], validation_perf[f] = self.train(train, validation)
-                self.hyperparameters.gd = 'sgd'
+                self.hyperparameters.gradient_descent = 'sgd'
                 self.weights = np.zeros((self.hyperparameters.in_dim + 1, self.hyperparameters.out_dim))
                 training_loss_sgd[f], training_perf[f], validation_loss[f], validation_perf[f] = self.train(train, validation)
-                self.hyperparameters.gd = "both"
+                self.hyperparameters.gradient_descent = "both"
 
             # Testing
             best_test_accuracy[f] = self.test(test)
@@ -224,7 +224,7 @@ class Network:
 
         print("Average Accuracy is ", np.mean(best_test_accuracy))
 
-        if self.hyperparameters.gd != "both":
+        if self.hyperparameters.gradient_descent != "both":
             self.plot(training_loss, validation_loss, 'Loss')
             self.plot(training_perf, validation_perf, 'Accuracy')
         else:
@@ -270,7 +270,7 @@ class Network:
         for e in range(self.hyperparameters.epochs):
             training_loss[e], training_accuracy[e], validation_loss[e], validation_accuracy[
                 e] = self.stochastic_gradient_descent(train,
-                                                      validation) if self.hyperparameters.gd == 'sgd' else self.batch_gradient_descent(
+                                                      validation) if self.hyperparameters.gradient_descent == 'sgd' else self.batch_gradient_descent(
                 train, validation)
 
             # To find the best weights
