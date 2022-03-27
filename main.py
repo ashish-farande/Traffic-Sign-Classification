@@ -59,18 +59,21 @@ def get_args():
         if choice == 1:
             parameters.fold_runs = 1
             parameters.align = False
+            parameters.pca_dim = 100
             parameters.classification = "binary"
             parameters.gradient_descent = 'batch'
             parameters.classes = [7, 8]
 
         elif choice == 2:
             parameters.align = True
+            parameters.pca_dim = 100
             parameters.classification = "binary"
             parameters.gradient_descent = 'batch'
             parameters.classes = [7, 8]
 
         elif choice == 3:
             parameters.align = True
+            parameters.pca_dim = 100
             parameters.classification = "binary"
             parameters.gradient_descent = 'batch'
             parameters.classes = [19, 20]
@@ -78,6 +81,7 @@ def get_args():
         elif choice == 4:
             parameters.align = True
             parameters.pca = True
+            parameters.pca_dim = 300
             parameters.gradient_descent = "batch"
             parameters.classification = "multi"
 
@@ -90,18 +94,21 @@ def get_args():
         elif choice == 6:
             parameters.align = False
             parameters.pca = True
+            parameters.pca_dim = 300
             parameters.gradient_descent = "batch"
             parameters.classification = "multi"
 
         elif choice == 7:
             parameters.align = True
             parameters.pca = True
+            parameters.pca_dim = 300
             parameters.gradient_descent = "sgd"
             parameters.classification = "multi"
 
         elif choice == 8:
             parameters.align = True
             parameters.pca = True
+            parameters.pca_dim = 300
             parameters.gradient_descent = "both"
             parameters.classification = "multi"
             parameters.learning_rate = 0.005

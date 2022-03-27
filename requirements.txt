@@ -1,0 +1,4 @@
+argparse
+matplotlib >= 2.2
+numpy
+
